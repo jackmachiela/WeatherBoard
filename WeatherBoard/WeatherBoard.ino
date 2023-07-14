@@ -138,7 +138,7 @@ void loop() {
   // Increment displayDay on button release and wrap around at 7
   if (dayButtonState && dayButtonReleased) {
     displayDay++;
-    if (displayDay > 7) {
+    if (displayDay > LED_COUNT) {
       displayDay = 0;
     }
     Serial.print("Button clicked. displayDay: ");
@@ -163,37 +163,25 @@ void loop() {
 
   }
 
-  // todayNumber = (UTC.dateTime("N").toInt());
-  todayNumber = 4;
-
-  for (int i = 0; i < LED_COUNT; i++) {
-    int j = i + todayNumber - 1;
-    if (j > 7) j = j - 6;
-
-    Serial.print("DEBUG==  displayDay: ");
-    Serial.print(displayDay);
-    Serial.print("   : todayNumber : ");
-    Serial.print(todayNumber);
-    Serial.print("   : i : ");
-    Serial.print(i);
-    Serial.print("   : j : ");
-    Serial.println(j);
+  todayNumber = (myTimeZone.dateTime("N").toInt());        //monday = 1, tue = 2, etc.
 
 
-    if (i == (displayDay-1)) {
-
-    Serial.print("   : i : ");
-    Serial.print(i);
-    Serial.print("   : j : ");
-    Serial.println(j);
-
-      leds[j] = CRGB::Red;
-    } else {
-      leds[j] = CRGB::Black;
+  FastLED.clear();                  // Set all LEDs to off
+  if (displayDay != 0 ) {
+    int displayLED = (displayDay + todayNumber);
+    if (displayLED > LED_COUNT + 1) {
+      displayLED = (displayLED - LED_COUNT);
     }
-  }
 
-  FastLED.show();
+    // Use these two lines if the LEDS are wired from right to left
+      leds[abs(todayNumber-LED_COUNT)] = CRGB::Blue;    // Set the current day's LED to Blue
+      leds[abs(displayLED-LED_COUNT - 1)]  = CRGB::Green;    // Set the forecasting LED to Green
+
+    // Use these two lines if the LEDS are wired from left to right
+    //leds[todayNumber - 1] = CRGB::Blue;    // Set the current day's LED to Blue
+    //leds[displayDay]  = CRGB::Green;    // Set the forecasting LED to Green          // needs work
+    }
+    FastLED.show();                   // Show the LED colors
 
 }
 
@@ -265,7 +253,6 @@ String GET_Request(const char* server) {
   return payload;
 }
 
-
 void JsonCONV() {
 
    DynamicJsonDocument doc(10000);
@@ -336,7 +323,6 @@ String translateMeteoCode(int i){           // convert meteo code to track numbe
   return weatherDescription;
 
 }
-
 
 void ShowForecastOnDisplay() {
 
@@ -438,17 +424,19 @@ void hardwarePOST(){                    //basic Power On Self Test for the hardw
 }
 
 void LEDsweep() { 
-	for(int i = 0; i < LED_COUNT; i++) {                 	// First slide the led in one direction
-    FastLED.clear();               // Set all LEDs to off
-    leds[i] = CRGB::Red;           // Set the current LED to red
-    FastLED.show();                // Show the LED colors
-    delay(50);                     // Wait 50 milliseconds
-	}
-	for(int i = (LED_COUNT)-1; i >= 0; i--) {           	// Now go in the other direction.  
+	for(int i = (LED_COUNT)-1; i >= 0; i--) {           	// First slide the led in one direction
     FastLED.clear();               // Set all LEDs to off
     leds[i] = CRGB::Blue;           // Set the current LED to red
     FastLED.show();                // Show the LED colors
     delay(50);                     // Wait 50 milliseconds
 	}
+	for(int i = 0; i < LED_COUNT; i++) {                 	// Now go in the other direction.  
+    FastLED.clear();               // Set all LEDs to off
+    leds[i] = CRGB::Green;           // Set the current LED to red
+    FastLED.show();                // Show the LED colors
+    delay(50);                     // Wait 50 milliseconds
+	}
   FastLED.clear();                 // and finally, clear them all again
+  FastLED.show();
+
 }
